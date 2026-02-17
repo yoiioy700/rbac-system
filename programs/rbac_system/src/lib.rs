@@ -69,7 +69,7 @@ pub mod rbac_system {
         // Create user role assignment
         let user_role = &mut ctx.accounts.user_role;
         user_role.user = user;
-        user_role.role = role_name;
+        user_role.role = role_name.clone();
         user_role.assigned_at = Clock::get()?.unix_timestamp;
         user_role.assigned_by = ctx.accounts.authority.key();
         user_role.bump = ctx.bumps.user_role;
@@ -380,20 +380,20 @@ pub enum RbacError {
 }
 
 // Events
-event!
+#[event]
 pub struct RbacInitialized {
     pub admin: Pubkey,
     pub timestamp: i64,
 }
 
-event!
+#[event]
 pub struct RoleCreated {
     pub name: String,
     pub permissions: Vec<Permission>,
     pub timestamp: i64,
 }
 
-event!
+#[event]
 pub struct RoleAssigned {
     pub user: Pubkey,
     pub role: String,
@@ -401,7 +401,7 @@ pub struct RoleAssigned {
     pub timestamp: i64,
 }
 
-event!
+#[event]
 pub struct PermissionChecked {
     pub user: Pubkey,
     pub permission: Permission,
@@ -409,14 +409,14 @@ pub struct PermissionChecked {
     pub timestamp: i64,
 }
 
-event!
+#[event]
 pub struct RoleRevoked {
     pub user: Pubkey,
     pub revoked_by: Pubkey,
     pub timestamp: i64,
 }
 
-event!
+#[event]
 pub struct ActionExecuted {
     pub user: Pubkey,
     pub action: Action,
