@@ -394,9 +394,8 @@ Perfect for developers transitioning from Web2 to Solana!
 
 Built for the **"Rebuild Backend Systems as On-Chain Rust Programs"** Challenge
 
-**Contact:** [Your contact info]
-**GitHub:** [Your GitHub URL]
-**Demo Video:** [YouTube/Loom link]
+**Telegram:** @aaiiuuu
+**GitHub:** https://github.com/yoiioy700
 
 ---
 
