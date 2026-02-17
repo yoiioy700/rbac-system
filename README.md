@@ -221,8 +221,8 @@ enum Permission {
 
 ```bash
 # Clone repository
-git clone https://github.com/fairscale/rbac-example.git
-cd rbac-example
+git clone https://github.com/yoiioy700/rbac-system.git
+cd rbac-system
 
 # Install dependencies
 yarn install
