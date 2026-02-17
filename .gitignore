@@ -1,0 +1,30 @@
+.anchor
+.DS_Store
+target
+**/*.rs.bk
+node_modules
+test-ledger
+.yarn-integrity
+Cargo.lock
+package-lock.json
+*.log
+.vscode/
+.idea/
+*.iml
+.env
+.env.local
+dist/
+build/
+
+# Solana specific
+.keypairs/
+*.key
+test-wallet.json
+
+# IDE
+.vscode
+.idea
+
+# OS
+.DS_Store
+Thumbs.db
