@@ -386,7 +386,7 @@ Perfect for developers transitioning from Web2 to Solana!
 - **Anchor Framework:** https://www.anchor-lang.com/
 - **Solana Docs:** https://docs.solana.com/
 - **PDA Guide:** https://solana.com/docs/core/pda
-- **FairScale:** https://fairscale.xyz/
+- **Bounty:** https://superteam.fun/earn/listing/rebuild-production-backend-systems-as-on-chain-rust-programs
 
 ---
 
