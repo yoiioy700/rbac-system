@@ -1,0 +1,308 @@
+{
+  "address": "826VeESV6R1DQnt5dELnGHx7j3xewoCRYX3nN4gJ9p2T",
+  "metadata": {
+    "name": "rbac_system",
+    "version": "0.1.0",
+    "spec": "0.1.0"
+  },
+  "instructions": [
+    {
+      "name": "initialize",
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [
+        {
+          "name": "rbacState",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "systemProgram"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "createRole",
+      "discriminator": [
+        170,
+        147,
+        127,
+        223,
+        222,
+        112,
+        205,
+        163
+      ],
+      "accounts": [
+        {
+          "name": "rbacState",
+          "writable": true
+        },
+        {
+          "name": "role",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "systemProgram"
+        }
+      ],
+      "args": [
+        {
+          "name": "roleName",
+          "type": "string"
+        },
+        {
+          "name": "permissions",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "assignRole",
+      "discriminator": [
+        255,
+        174,
+        125,
+        180,
+        203,
+        155,
+        202,
+        131
+      ],
+      "accounts": [
+        {
+          "name": "rbacState",
+          "writable": true
+        },
+        {
+          "name": "role"
+        },
+        {
+          "name": "userRole",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "systemProgram"
+        }
+      ],
+      "args": [
+        {
+          "name": "user",
+          "type": "pubkey"
+        },
+        {
+          "name": "roleName",
+          "type": "string"
+        },
+        {
+          "name": "expiresAt",
+          "type": {
+            "option": "i64"
+          }
+        }
+      ]
+    },
+    {
+      "name": "checkPermission",
+      "discriminator": [
+        154,
+        199,
+        232,
+        242,
+        96,
+        72,
+        197,
+        236
+      ],
+      "accounts": [
+        {
+          "name": "role"
+        },
+        {
+          "name": "userRole"
+        }
+      ],
+      "args": [
+        {
+          "name": "requiredPermission",
+          "type": "u32"
+        }
+      ],
+      "returns": "bool"
+    },
+    {
+      "name": "revokeRole",
+      "discriminator": [
+        179,
+        232,
+        2,
+        180,
+        48,
+        227,
+        82,
+        7
+      ],
+      "accounts": [
+        {
+          "name": "rbacState",
+          "writable": true
+        },
+        {
+          "name": "userRole",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "roleName",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "RbacState",
+      "discriminator": [
+        69,
+        75,
+        3,
+        195,
+        160,
+        229,
+        253,
+        114
+      ]
+    },
+    {
+      "name": "Role",
+      "discriminator": [
+        46,
+        219,
+        197,
+        24,
+        233,
+        249,
+        253,
+        154
+      ]
+    },
+    {
+      "name": "UserRole",
+      "discriminator": [
+        62,
+        252,
+        194,
+        137,
+        183,
+        165,
+        147,
+        28
+      ]
+    }
+  ],
+  "types": [
+    {
+      "name": "RbacState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "userCount",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Role",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "permissions",
+            "type": "u32"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UserRole",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "role",
+            "type": "string"
+          },
+          {
+            "name": "assignedAt",
+            "type": "i64"
+          },
+          {
+            "name": "expiresAt",
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "assignedBy",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}

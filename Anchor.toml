@@ -12,7 +12,7 @@ rbac_system = "826VeESV6R1DQnt5dELnGHx7j3xewoCRYX3nN4gJ9p2T"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "Devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
