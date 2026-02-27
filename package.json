@@ -1,0 +1,34 @@
+{
+  "name": "rbac-system-client",
+  "version": "0.1.0",
+  "description": "RBAC System CLI - On-Chain Access Control",
+  "main": "cli.js",
+  "scripts": {
+    "start": "node cli.js",
+    "test": "echo 'Run tests with: npm run test:unit'",
+    "test:unit": "mocha tests/*.js"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.30.1",
+    "@solana/web3.js": "^1.91.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
+    "chai": "^5.1.0",
+    "mocha": "^10.3.0",
+    "ts-mocha": "^11.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "keywords": [
+    "solana",
+    "rbac",
+    "access-control",
+    "anchor",
+    "rust",
+    "web2-vs-solana"
+  ],
+  "author": "YoiioY",
+  "license": "MIT"
+}

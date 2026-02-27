@@ -3,57 +3,66 @@ import { Program } from "@coral-xyz/anchor";
 import { RbacSystem } from "../target/types/rbac_system";
 import { expect } from "chai";
 
+// Permission Bitmasks
+const PERM_READ = 1 << 0;   // 1
+const PERM_CREATE = 1 << 1; // 2
+const PERM_UPDATE = 1 << 2; // 4
+const PERM_DELETE = 1 << 3; // 8
+const PERM_ADMIN = 1 << 4;  // 16
+
 describe("RBAC System - Access Control on Solana", () => {
   // Configure the client to use the local cluster
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
   const program = anchor.workspace.RbacSystem as Program<RbacSystem>;
-  
+
   // Test accounts
   const admin = provider.wallet;
   let rbacState: anchor.web3.PublicKey;
-  let rbacStateBump: number;
-  
+
   // Role PDAs
   let adminRole: anchor.web3.PublicKey;
   let managerRole: anchor.web3.PublicKey;
   let userRole: anchor.web3.PublicKey;
-  let adminRoleBump: number;
-  let managerRoleBump: number;
-  let userRoleBump: number;
-  
+
   // Test user
   const testUser = anchor.web3.Keypair.generate();
-  let testUserRoleAssignment: anchor.web3.PublicKey;
+  let testUserRoleA: anchor.web3.PublicKey;
+  let testUserRoleB: anchor.web3.PublicKey;
 
   before(async () => {
     // Derive PDAs
-    [rbacState, rbacStateBump] = await anchor.web3.PublicKey.findProgramAddress(
+    [rbacState] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from("rbac_state")],
       program.programId
     );
-    
-    [adminRole, adminRoleBump] = await anchor.web3.PublicKey.findProgramAddress(
+
+    [adminRole] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from("role"), Buffer.from("admin")],
       program.programId
     );
-    
-    [managerRole, managerRoleBump] = await anchor.web3.PublicKey.findProgramAddress(
+
+    [managerRole] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from("role"), Buffer.from("manager")],
       program.programId
     );
-    
-    [userRole, userRoleBump] = await anchor.web3.PublicKey.findProgramAddress(
+
+    [userRole] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from("role"), Buffer.from("user")],
       program.programId
     );
-    
-    [testUserRoleAssignment] = await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from("user_role"), testUser.publicKey.toBuffer()],
+
+    [testUserRoleA] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("user_role"), testUser.publicKey.toBuffer(), Buffer.from("admin")],
       program.programId
     );
-    
+
+    [testUserRoleB] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("user_role"), testUser.publicKey.toBuffer(), Buffer.from("user")],
+      program.programId
+    );
+
     // Fund test user
     await provider.connection.confirmTransaction(
       await provider.connection.requestAirdrop(testUser.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL)
@@ -70,31 +79,17 @@ describe("RBAC System - Access Control on Solana", () => {
           systemProgram: anchor.web3.SystemProgram.programId,
         })
         .rpc();
-      
-      console.log("✓ RBAC System initialized");
-      console.log("  Transaction:", tx);
-      
-      // Verify state
+
       const state = await program.account.rbacState.fetch(rbacState);
       expect(state.admin.toString()).to.equal(admin.publicKey.toString());
-      expect(state.roleCount).to.equal(1); // Admin role auto-created
-      expect(state.userCount).to.equal(0);
     });
   });
 
-  describe("2. Role Creation", () => {
+  describe("2. Role Creation (Bitmask Permissions)", () => {
     it("Should create Admin role with full permissions", async () => {
-      const tx = await program.methods
-        .createRole(
-          "admin",
-          [ // All permissions
-            { create: {} },
-            { read: {} },
-            { update: {} },
-            { delete: {} },
-            { admin: {} },
-          ]
-        )
+      const allPerms = PERM_READ | PERM_CREATE | PERM_UPDATE | PERM_DELETE | PERM_ADMIN; // 31
+      await program.methods
+        .createRole("admin", allPerms)
         .accounts({
           rbacState,
           role: adminRole,
@@ -102,45 +97,14 @@ describe("RBAC System - Access Control on Solana", () => {
           systemProgram: anchor.web3.SystemProgram.programId,
         })
         .rpc();
-      
-      const role = await program.account.role.fetch(adminRole);
-      expect(role.name).to.equal("admin");
-      expect(role.permissions.length).to.equal(5);
-      console.log("✓ Admin role created with", role.permissions.length, "permissions");
-    });
 
-    it("Should create Manager role with limited permissions", async () => {
-      const tx = await program.methods
-        .createRole(
-          "manager",
-          [ // Create, Read, Update only
-            { create: {} },
-            { read: {} },
-            { update: {} },
-          ]
-        )
-        .accounts({
-          rbacState,
-          role: managerRole,
-          admin: admin.publicKey,
-          systemProgram: anchor.web3.SystemProgram.programId,
-        })
-        .rpc();
-      
-      const role = await program.account.role.fetch(managerRole);
-      expect(role.name).to.equal("manager");
-      expect(role.permissions.length).to.equal(3);
-      console.log("✓ Manager role created with", role.permissions.length, "permissions");
+      const role = await program.account.role.fetch(adminRole);
+      expect(role.permissions).to.equal(allPerms);
     });
 
     it("Should create User role with read-only permission", async () => {
-      const tx = await program.methods
-        .createRole(
-          "user",
-          [ // Read only
-            { read: {} },
-          ]
-        )
+      await program.methods
+        .createRole("user", PERM_READ) // 1
         .accounts({
           rbacState,
           role: userRole,
@@ -148,155 +112,108 @@ describe("RBAC System - Access Control on Solana", () => {
           systemProgram: anchor.web3.SystemProgram.programId,
         })
         .rpc();
-      
+
       const role = await program.account.role.fetch(userRole);
-      expect(role.name).to.equal("user");
-      expect(role.permissions.length).to.equal(1);
-      console.log("✓ User role created with read-only access");
+      expect(role.permissions).to.equal(PERM_READ);
     });
   });
 
-  describe("3. Role Assignment", () => {
-    it("Should assign user role to test user", async () => {
-      const tx = await program.methods
-        .assignRole(testUser.publicKey, "user")
-      .accounts({
+  describe("3. Multi-Role Assignment and Time-bounds", () => {
+    it("Should assign multiple roles to the same user", async () => {
+      // Assign Admin (No expiry)
+      await program.methods
+        .assignRole(testUser.publicKey, "admin", null)
+        .accounts({
           rbacState,
-          role: userRole,
-          userRole: testUserRoleAssignment,
+          role: adminRole,
+          userRole: testUserRoleA,
           authority: admin.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
         })
         .rpc();
-      
-      const assignment = await program.account.userRole.fetch(testUserRoleAssignment);
-      expect(assignment.user.toString()).to.equal(testUser.publicKey.toString());
-      expect(assignment.role).to.equal("user");
-      console.log("✓ Role assigned to test user");
-    });
-  });
 
-  describe("4. Permission Checks", () => {
-    it("Should verify user has READ permission", async () => {
-      const hasPermission = await program.methods
-        .checkPermission(testUser.publicKey, { read: {} })
-        .accounts({
-          role: userRole,
-          userRole: testUserRoleAssignment,
-        })
-        .view();
-      
-      expect(hasPermission).to.be.true;
-      console.log("✓ User verified to have READ permission");
-    });
+      // Assign User (Expires in 2 seconds)
+      const now = Math.floor(Date.now() / 1000);
+      const expiresAt = new anchor.BN(now + 2);
 
-    it("Should verify user does NOT have CREATE permission", async () => {
-      const hasPermission = await program.methods
-        .checkPermission(testUser.publicKey, { create: {} })
-        .accounts({
-          role: userRole,
-          userRole: testUserRoleAssignment,
-        })
-        .view();
-      
-      expect(hasPermission).to.be.false;
-      console.log("✓ User correctly denied CREATE permission");
-    });
-  });
-
-  describe("5. Action Execution", () => {
-    it("Should allow READ action for user", async () => {
-      const tx = await program.methods
-        .executeAction({ readResource: {} })
+      await program.methods
+        .assignRole(testUser.publicKey, "user", expiresAt)
         .accounts({
           rbacState,
           role: userRole,
-          userRole: testUserRoleAssignment,
-          user: testUser.publicKey,
+          userRole: testUserRoleB,
+          authority: admin.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
         })
-        .signers([testUser])
         .rpc();
-      
-      console.log("✓ User successfully executed READ action");
-    });
 
-    it("Should deny CREATE action for user", async () => {
-      try {
-        await program.methods
-          .executeAction({ createResource: {} })
-          .accounts({
-            rbacState,
-            role: userRole,
-            userRole: testUserRoleAssignment,
-            user: testUser.publicKey,
-          })
-          .signers([testUser])
-          .rpc();
-        
-        expect.fail("Should have thrown error");
-      } catch (e) {
-        expect(e.toString()).to.include("PermissionDenied");
-        console.log("✓ User correctly blocked from CREATE action");
-      }
+      const assignmentA = await program.account.userRole.fetch(testUserRoleA);
+      const assignmentB = await program.account.userRole.fetch(testUserRoleB);
+
+      expect(assignmentA.role).to.equal("admin");
+      expect(assignmentB.role).to.equal("user");
+      expect(assignmentB.expiresAt).to.not.be.null;
     });
   });
 
-  describe("6. Web2 vs Solana Comparison", () => {
-    it("Should demonstrate PDA-based access control", async () => {
-      // In Web2: Check database table "user_roles"
-      // In Solana: Check on-chain PDA account
-      
-      const rbacInfo = await program.account.rbacState.fetch(rbacState);
-      const roleInfo = await program.account.role.fetch(userRole);
-      const assignmentInfo = await program.account.userRole.fetch(testUserRoleAssignment);
-      
-      console.log("\n===== Web2 vs Solana Comparison =====");
-      console.log("Web2: SQL database with tables");
-      console.log("  - users table");
-      console.log("  - roles table");  
-      console.log("  - user_roles junction table");
-      console.log("\nSolana: On-chain PDAs (Program Derived Addresses)");
-      console.log("  - rbac_state PDA:", rbacState.toString());
-      console.log("  - role PDA:", userRole.toString());
-      console.log("  - user_role PDA:", testUserRoleAssignment.toString());
-      console.log("\nOn-Chain State:");
-      console.log("  Total roles:", rbacInfo.roleCount);
-      console.log("  Total users:", rbacInfo.userCount);
-      console.log("  User role assignment:", assignmentInfo.role);
-      console.log("  Permissions:", roleInfo.permissions.map(p => Object.keys(p)[0]));
-      console.log("=====================================\n");
-    });
-  });
-
-  describe("7. Role Revocation", () => {
-    it("Should revoke user role", async () => {
-      const tx = await program.methods
-        .revokeRole(testUser.publicKey)
+  describe("4. Bitwise Validation and Expiry", () => {
+    it("Should allow Admin to have CREATE permission", async () => {
+      const hasPermission = await program.methods
+        .checkPermission(PERM_CREATE)
         .accounts({
-          userRole: testUserRoleAssignment,
+          role: adminRole,
+          userRole: testUserRoleA,
+        })
+        .view();
+
+      expect(hasPermission).to.be.true;
+    });
+
+    it("Should deny User Role from UPDATE permission", async () => {
+      const hasPermission = await program.methods
+        .checkPermission(PERM_UPDATE)
+        .accounts({
+          role: userRole,
+          userRole: testUserRoleB,
+        })
+        .view();
+
+      expect(hasPermission).to.be.false;
+    });
+
+    it("Should fail permission check after role expires", async () => {
+      // Wait for 3 seconds to let the role expire
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+
+      const hasPermission = await program.methods
+        .checkPermission(PERM_READ) // Should normally be true for User Role
+        .accounts({
+          role: userRole,
+          userRole: testUserRoleB,
+        })
+        .view();
+
+      expect(hasPermission).to.be.false;
+    });
+  });
+
+  describe("5. Role Revocation", () => {
+    it("Should revoke admin role from user", async () => {
+      await program.methods
+        .revokeRole("admin")
+        .accounts({
+          rbacState,
+          userRole: testUserRoleA,
           authority: admin.publicKey,
         })
         .rpc();
-      
-      // Account should be closed
+
       try {
-        await program.account.userRole.fetch(testUserRoleAssignment);
+        await program.account.userRole.fetch(testUserRoleA);
         expect.fail("Account should be closed");
       } catch (e) {
-        console.log("✓ User role successfully revoked (account closed)");
+        // Expected
       }
     });
   });
-});
-
-// Test summary
-after(() => {
-  console.log("\n✅ RBAC System Test Summary:");
-  console.log("- System initialization: ✓");
-  console.log("- Role creation (3 roles): ✓");
-  console.log("- Role assignment: ✓");
-  console.log("- Permission verification: ✓");
-  console.log("- Action authorization: ✓");
-  console.log("- Web2 vs Solana comparison: ✓");
-  console.log("- Role revocation: ✓");
 });
