@@ -153,8 +153,6 @@
 ## 🚀 Future Roadmap
 
 If this wins:
-- Add time-bound roles
-- Multi-role support
 - Mainnet deployment
 - React frontend
 - Integration guide
