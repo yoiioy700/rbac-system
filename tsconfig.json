@@ -2,15 +2,21 @@
   "compilerOptions": {
     "target": "es2020",
     "module": "commonjs",
-    "strict": false,
+    "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "baseUrl": ".",
-    "types": ["mocha", "chai"]
+    "types": ["node"]
   },
   "include": [
-    "tests/**/*.ts"
-  ]
+    "tests/**/*.ts",
+    "cli.ts"
+  ],
+  "ts-node": {
+    "compilerOptions": {
+      "module": "commonjs"
+    }
+  }
 }
