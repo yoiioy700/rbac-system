@@ -55,10 +55,12 @@ async function main() {
 
         } else if (command === "create-role") {
             const roleName = args[1];
+            const permissions = args[2] ? parseInt(args[2]) : 7;
             if (!roleName) throw new Error("Missing role name.");
+            if (isNaN(permissions) || permissions < 0 || permissions > 31) throw new Error("Permissions must be 0-31.");
             
-            console.log(`\n⏳ Creating role '${roleName}' on Devnet...`);
-            const tx = await program.methods.createRole(roleName, 7) // 7 = ALL perms for test
+            console.log(`\n⏳ Creating role '${roleName}' with permissions ${permissions} on Devnet...`);
+            const tx = await program.methods.createRole(roleName, permissions) // e.g: npm run cli create-role editor 7
                 .accountsPartial({
                     rbacState: getRbacStatePDA(),
                     role: getRolePDA(roleName),

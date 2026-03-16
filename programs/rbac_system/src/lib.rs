@@ -37,6 +37,11 @@ pub mod rbac_system {
             ctx.accounts.rbac_state.admin == ctx.accounts.admin.key(),
             RbacError::NotAuthorized
         );
+        // Max 5 permission bits = 0b11111 = 31
+        require!(
+            permissions <= 31u32,
+            RbacError::InvalidPermissions
+        );
         
         let role = &mut ctx.accounts.role;
         role.name = role_name.clone();
@@ -66,7 +71,7 @@ pub mod rbac_system {
         // Guard: Validate role_name length to prevent oversized PDA seed injection.
         require!(
             role_name.len() <= 32,
-            RbacError::NameTooLong
+            RbacError::RoleNameTooLong
         );
         // Only admin can assign
         require!(
@@ -405,8 +410,8 @@ pub struct UserRole {
 pub enum RbacError {
     #[msg("Role name exceeds maximum length of 32 characters")]
     RoleNameTooLong,
-    #[msg("Name exceeds maximum length of 32 characters")]
-    NameTooLong,
+    #[msg("Invalid permissions bitmask value")]
+    InvalidPermissions,
     #[msg("Role not found from the provided PDA")]
     RoleNotFound,
     #[msg("User role PDA does not match expected Role")]
