@@ -2,9 +2,10 @@
   "name": "rbac-system-client",
   "version": "0.1.0",
   "description": "RBAC System CLI - On-Chain Access Control",
-  "main": "cli.js",
+  "main": "cli.ts",
   "scripts": {
-    "start": "node cli.js",
+    "cli": "ts-node cli.ts",
+    "start": "ts-node cli.ts",
     "test": "echo 'Run tests with: npm run test:unit'",
     "test:unit": "mocha tests/*.js"
   },
@@ -15,6 +16,7 @@
   "devDependencies": {
     "@types/chai": "^5.2.3",
     "@types/mocha": "^10.0.10",
+    "@types/node": "^20.0.0",
     "chai": "^5.1.0",
     "mocha": "^10.3.0",
     "ts-mocha": "^11.1.0",
