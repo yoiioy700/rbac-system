@@ -118,10 +118,6 @@ pub mod rbac_system {
         let current_time = Clock::get()?.unix_timestamp;
         
         require!(
-            ctx.accounts.caller.key() == user_role.user,
-            RbacError::NotAuthorized
-        );
-        require!(
             user_role.role == role.name,
             RbacError::UserRoleMismatch
         );
@@ -164,10 +160,6 @@ pub mod rbac_system {
         let role = &ctx.accounts.role;
         let current_time = Clock::get()?.unix_timestamp;
         
-        require!(
-            ctx.accounts.caller.key() == user_role.user,
-            RbacError::NotAuthorized
-        );
         require!(
             user_role.role == role.name,
             RbacError::UserRoleMismatch

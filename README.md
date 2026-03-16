@@ -6,7 +6,7 @@
 
 | Component | Details |
 |---------|--------|
-| **Program ID** | `826VeESV6R1DQnt5dELnGHx7j3xewoCRXX3nN4gJ9p2T` |
+| **Program ID** | `826VeESV6R1DQnt5dELnGHx7j3xewoCRYX3nN4gJ9p2T` |
 |**Network** | Devnet |
 |**Anchor Version** | 0.30.1 |
 |**Solana Version** | 1.18.23 |
@@ -42,7 +42,7 @@ We translate Web2 RBAC concepts into Solana's Account Model using Program Derive
 RbacState: PDA(seed = [b"bac_state"])
 
 // Each role is its own account
-Role: PDA(seed = [b"bro&, role_name])
+Role: PDA(seed = [b"role", role_name])
 
 // User-role mapping (supports multi-role)
 UserRole: PDA(seed = [b"user_role", user_pubkey, role_name])
