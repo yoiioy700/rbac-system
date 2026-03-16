@@ -106,6 +106,36 @@ await program.methods.assignRole(userWallet, "editor", expiry).accounts({}).rpc(
 const hasPerm = await program.methods.checkPermission(permissions).accounts({}).view();
 ```
 
+## Testing with CLI (Testable Client)
+
+To fulfill the testable client requirement, a simple CLI script `cli.ts` is provided to interact with the deployed program on Devnet.
+
+### Setup
+Make sure your dependencies are installed:
+```bash
+npm install
+# or
+yarn install
+```
+
+### Commands
+
+**Create a Role:**
+```bash
+npm run cli create-role <role-name>
+# Example: npm run cli create-role admin
+```
+
+**Assign a Role to a User:**
+```bash
+npm run cli assign-role <user-pubkey> <role-name>
+# Example: npm run cli assign-role 4E5B... admin
+```
+
+### Devnet Transaction Links (Bounty Proof)
+- **Create Role Tx:** `[Insert Explorer Link Here]`
+- **Assign Role Tx:** `[Insert Explorer Link Here]`
+
 ## License
 
 MID License - see LICENSE for details.
