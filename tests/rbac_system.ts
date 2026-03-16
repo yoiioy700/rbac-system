@@ -79,6 +79,8 @@ describe("RBAC System - Access Control on Solana", () => {
           systemProgram: anchor.web3.SystemProgram.programId,
         })
         .rpc();
+        
+      console.log(`\n✅ Tx 'initialize': https://explorer.solana.com/tx/${tx}?cluster=devnet`);
 
       const state = await program.account.rbacState.fetch(rbacState);
       expect(state.admin.toString()).to.equal(admin.publicKey.toString());
@@ -88,7 +90,7 @@ describe("RBAC System - Access Control on Solana", () => {
   describe("2. Role Creation (Bitmask Permissions)", () => {
     it("Should create Admin role with full permissions", async () => {
       const allPerms = PERM_READ | PERM_CREATE | PERM_UPDATE | PERM_DELETE | PERM_ADMIN; // 31
-      await program.methods
+      const tx = await program.methods
         .createRole("admin", allPerms)
         .accounts({
           rbacState,
@@ -98,12 +100,14 @@ describe("RBAC System - Access Control on Solana", () => {
         })
         .rpc();
 
+      console.log(`\n✅ Tx 'createRole (admin)': https://explorer.solana.com/tx/${tx}?cluster=devnet`);
+
       const role = await program.account.role.fetch(adminRole);
       expect(role.permissions).to.equal(allPerms);
     });
 
     it("Should create User role with read-only permission", async () => {
-      await program.methods
+      const tx = await program.methods
         .createRole("user", PERM_READ) // 1
         .accounts({
           rbacState,
@@ -113,6 +117,8 @@ describe("RBAC System - Access Control on Solana", () => {
         })
         .rpc();
 
+      console.log(`\n✅ Tx 'createRole (user)': https://explorer.solana.com/tx/${tx}?cluster=devnet`);
+
       const role = await program.account.role.fetch(userRole);
       expect(role.permissions).to.equal(PERM_READ);
     });
@@ -121,7 +127,7 @@ describe("RBAC System - Access Control on Solana", () => {
   describe("3. Multi-Role Assignment and Time-bounds", () => {
     it("Should assign multiple roles to the same user", async () => {
       // Assign Admin (No expiry)
-      await program.methods
+      const txAdmin = await program.methods
         .assignRole(testUser.publicKey, "admin", null)
         .accounts({
           rbacState,
@@ -132,11 +138,13 @@ describe("RBAC System - Access Control on Solana", () => {
         })
         .rpc();
 
+      console.log(`\n✅ Tx 'assignRole (admin)': https://explorer.solana.com/tx/${txAdmin}?cluster=devnet`);
+
       // Assign User (Expires in 2 seconds)
       const now = Math.floor(Date.now() / 1000);
       const expiresAt = new anchor.BN(now + 2);
 
-      await program.methods
+      const txUser = await program.methods
         .assignRole(testUser.publicKey, "user", expiresAt)
         .accounts({
           rbacState,
@@ -146,6 +154,8 @@ describe("RBAC System - Access Control on Solana", () => {
           systemProgram: anchor.web3.SystemProgram.programId,
         })
         .rpc();
+
+      console.log(`\n✅ Tx 'assignRole (user)': https://explorer.solana.com/tx/${txUser}?cluster=devnet`);
 
       const assignmentA = await program.account.userRole.fetch(testUserRoleA);
       const assignmentB = await program.account.userRole.fetch(testUserRoleB);
@@ -199,7 +209,7 @@ describe("RBAC System - Access Control on Solana", () => {
 
   describe("5. Role Revocation", () => {
     it("Should revoke admin role from user", async () => {
-      await program.methods
+      const tx = await program.methods
         .revokeRole("admin")
         .accounts({
           rbacState,
@@ -207,6 +217,8 @@ describe("RBAC System - Access Control on Solana", () => {
           authority: admin.publicKey,
         })
         .rpc();
+
+      console.log(`\n✅ Tx 'revokeRole': https://explorer.solana.com/tx/${tx}?cluster=devnet`);
 
       try {
         await program.account.userRole.fetch(testUserRoleA);
