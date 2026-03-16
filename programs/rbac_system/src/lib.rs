@@ -12,7 +12,7 @@ pub mod rbac_system {
         rbac_state.admin = ctx.accounts.admin.key();
         rbac_state.bump = ctx.bumps.rbac_state;
         rbac_state.role_count = 0;
-        rbac_state.user_count = 0;
+        rbac_state.assignment_count = 0;
         
         // Let user manually create admin role. The initial creator is already stored as admin.
         emit!(RbacInitialized {
@@ -63,6 +63,11 @@ pub mod rbac_system {
         role_name: String,
         expires_at: Option<i64>,
     ) -> Result<()> {
+        // Guard: Validate role_name length to prevent oversized PDA seed injection.
+        require!(
+            role_name.len() <= 32,
+            RbacError::NameTooLong
+        );
         // Only admin can assign
         require!(
             ctx.accounts.rbac_state.admin == ctx.accounts.authority.key(),
@@ -83,9 +88,10 @@ pub mod rbac_system {
         user_role.assigned_by = ctx.accounts.authority.key();
         user_role.bump = ctx.bumps.user_role;
         
-        // Don't increment user_count here multiple times if they just get more roles, 
-        // to be strictly correct we would need a separate User struct, but for now we keep it simple.
-        ctx.accounts.rbac_state.user_count += 1;
+        // Each (user, role) PDA is unique — this accurately tracks the number of
+        // role assignments across the system (not unique users). Renamed from
+        // user_count to assignment_count to reflect correct semantics.
+        ctx.accounts.rbac_state.assignment_count += 1;
         
         emit!(RoleAssigned {
             user,
@@ -307,9 +313,9 @@ pub struct RevokeRole<'info> {
 /// Global RBAC Configuration
 #[account]
 pub struct RbacState {
-    pub admin: Pubkey,          // Master admin
-    pub role_count: u32,        // System analytics
-    pub user_count: u32,        // System analytics
+    pub admin: Pubkey,              // Master admin
+    pub role_count: u32,            // Total distinct roles created
+    pub assignment_count: u32,      // Total role assignments (each user+role PDA = 1)
     pub bump: u8,               
 }
 impl RbacState {
@@ -350,6 +356,8 @@ impl UserRole {
 pub enum RbacError {
     #[msg("Role name exceeds maximum length of 32 characters")]
     RoleNameTooLong,
+    #[msg("Name exceeds maximum length of 32 characters")]
+    NameTooLong,
     #[msg("Role not found from the provided PDA")]
     RoleNotFound,
     #[msg("User role PDA does not match expected Role")]
