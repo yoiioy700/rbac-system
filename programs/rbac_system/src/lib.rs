@@ -186,7 +186,10 @@ pub mod rbac_system {
             RbacError::NotAuthorized
         );
 
-        ctx.accounts.rbac_state.assignment_count -= 1;
+        ctx.accounts.rbac_state.assignment_count = ctx.accounts.rbac_state
+            .assignment_count
+            .checked_sub(1)
+            .ok_or(RbacError::CountUnderflow)?;
 
         emit!(RoleRevoked {
             user: ctx.accounts.user_role.user,
@@ -209,7 +212,14 @@ pub mod rbac_system {
             RbacError::NotAuthorized
         );
         
+        let old_admin = ctx.accounts.rbac_state.admin;
         ctx.accounts.rbac_state.admin = new_admin;
+
+        emit!(AdminTransferred {
+            old_admin,
+            new_admin,
+            timestamp: Clock::get()?.unix_timestamp,
+        });
         
         Ok(())
     }
@@ -405,6 +415,8 @@ pub enum RbacError {
     PermissionDenied,
     #[msg("Only the admin can perform this configuration action")]
     NotAuthorized,
+    #[msg("Assignment count underflow")]
+    CountUnderflow,
 }
 
 /// ============ EVENTS ============
@@ -435,6 +447,13 @@ pub struct RoleRevoked {
     pub revoked_by: Pubkey,
     pub timestamp: i64,
 }
+#[event]
+pub struct AdminTransferred {
+    pub old_admin: Pubkey,
+    pub new_admin: Pubkey,
+    pub timestamp: i64,
+}
+
 #[event]
 pub struct PermissionChecked {
     pub user: Pubkey,
