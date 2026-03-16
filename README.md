@@ -133,8 +133,8 @@ npm run cli assign-role <user-pubkey> <role-name>
 ```
 
 ### Devnet Transaction Links (Bounty Proof)
-- **Create Role Tx:** `[Insert Explorer Link Here]`
-- **Assign Role Tx:** `[Insert Explorer Link Here]`
+- **Create Role Tx:** [https://explorer.solana.com/tx/5q4X7h2QqzxNPtoaKcbCr4dPrj2Aev8dtCcgE7vWyjZfAEnXFsCyDAsUZnjTWaLyxm35GYAmUyBEwUfrBwb9xXP1?cluster=devnet](https://explorer.solana.com/tx/5q4X7h2QqzxNPtoaKcbCr4dPrj2Aev8dtCcgE7vWyjZfAEnXFsCyDAsUZnjTWaLyxm35GYAmUyBEwUfrBwb9xXP1?cluster=devnet)
+- **Assign Role Tx:** [https://explorer.solana.com/tx/3tvrgGD7zo2xNkrSLLibDhM59RuYt3rGsAm5pk3mUjm8dG1qvS5TnC2LBNHdjLLTHWEP6GoBE8Ng586GmGKyWEn2?cluster=devnet](https://explorer.solana.com/tx/3tvrgGD7zo2xNkrSLLibDhM59RuYt3rGsAm5pk3mUjm8dG1qvS5TnC2LBNHdjLLTHWEP6GoBE8Ng586GmGKyWEn2?cluster=devnet)
 
 ## License
 
