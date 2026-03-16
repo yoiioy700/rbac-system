@@ -22,6 +22,7 @@ import {
   Loader2,
   Zap,
   Lock,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PermissionBadge } from "../components/PermissionBadge";
@@ -244,6 +245,7 @@ export default function Dashboard() {
               <div className="space-y-6">
                 <CheckPermissionCard />
                 <RevokeRoleCard />
+                <TransferAdminCard />
               </div>
             </div>
           </div>
@@ -452,7 +454,7 @@ function AssignRoleCard() {
 
   return (
     <GlassCard
-      title="Assign Role to User"
+      title="Assign or Update Role"
       icon={<Key className="w-4 h-4 text-cyan-400" />}
       accentColor="cyan"
     >
@@ -491,7 +493,7 @@ function AssignRoleCard() {
           disabled={loading || !targetUser || !roleName}
           className="w-full flex items-center justify-center gap-2 py-2.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl font-semibold shadow-lg shadow-cyan-500/20 transition-all duration-200 text-white text-sm"
         >
-          {loading ? <><Spinner /> Processing...</> : "Assign Role"}
+          {loading ? <><Spinner /> Processing...</> : "Assign / Update Role"}
         </button>
       </div>
     </GlassCard>
@@ -742,6 +744,102 @@ function RevokeRoleCard() {
             </>
           )}
         </button>
+      </div>
+    </GlassCard>
+  );
+}
+
+// ─── Transfer Admin ──────────────────────────────────────────────────────────
+
+function TransferAdminCard() {
+  const { connection } = useConnection();
+  const wallet = useWallet();
+  const [newAdmin, setNewAdmin] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [confirm, setConfirm] = useState(false);
+
+  const handleTransfer = async () => {
+    if (!wallet.publicKey || !newAdmin) return;
+    setLoading(true);
+    const toastId = toast.loading(`Transferring Admin rights to ${newAdmin.slice(0, 8)}...`);
+    try {
+      const provider = new AnchorProvider(connection, wallet as any, {});
+      const program = getProgram(provider);
+      const newAdminPubkey = new web3.PublicKey(newAdmin);
+
+      await program.methods
+        .transferAdmin(newAdminPubkey)
+        .accounts({
+          rbacState: getRbacStatePDA(),
+          admin: wallet.publicKey,
+        })
+        .rpc();
+
+      toast.success(
+        `Admin rights successfully transferred. Note: You will lose admin access!`,
+        { id: toastId }
+      );
+      setNewAdmin("");
+      setConfirm(false);
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Transfer failed: " + (err.message ?? "Unknown error"), { id: toastId });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <GlassCard
+      title="Transfer Admin Rights"
+      icon={<AlertTriangle className="w-4 h-4 text-amber-400" />}
+      accentColor="purple" // Reusing purple base but styling buttons Amber
+    >
+      <div className="space-y-4">
+        <p className="text-xs text-slate-500 leading-relaxed">
+          Transfer master admin rights to another wallet, Multisig, or DAO address.
+          <span className="text-rose-400 font-medium block mt-1">
+            Warning: This action is irreversible. You will instantly lose admin control.
+          </span>
+        </p>
+
+        <InputField
+          label="New Admin Public Key"
+          placeholder="New master Solana address..."
+          value={newAdmin}
+          onChange={(e) => setNewAdmin(e.target.value)}
+          className="font-mono text-xs focus:border-amber-500/50 focus:ring-amber-500/30"
+        />
+
+        {!confirm ? (
+          <button
+            onClick={() => setConfirm(true)}
+            disabled={!newAdmin}
+            className="w-full flex items-center justify-center gap-2 py-2.5 border border-amber-500/40 hover:bg-amber-500/10 text-amber-400 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl font-semibold transition-all duration-200 text-sm"
+          >
+            Initiate Transfer
+          </button>
+        ) : (
+          <div className="flex gap-3">
+            <button
+              onClick={() => setConfirm(false)}
+              className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-semibold transition-all duration-200 text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleTransfer}
+              disabled={loading}
+              className="flex-[2] flex items-center justify-center gap-2 py-2.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-semibold shadow-lg shadow-amber-500/20 transition-all duration-200 text-sm"
+            >
+              {loading ? (
+                <><Spinner /> Transferring...</>
+              ) : (
+                <><AlertTriangle className="w-4 h-4" /> Confirm Transfer</>
+              )}
+            </button>
+          </div>
+        )}
       </div>
     </GlassCard>
   );

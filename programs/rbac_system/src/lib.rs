@@ -81,6 +81,8 @@ pub mod rbac_system {
         
         // Create or update user role assignment
         let user_role = &mut ctx.accounts.user_role;
+        let is_new = user_role.assigned_at == 0; // 0 means uninitialized default
+        
         user_role.user = user;
         user_role.role = role_name.clone();
         user_role.assigned_at = Clock::get()?.unix_timestamp;
@@ -89,9 +91,10 @@ pub mod rbac_system {
         user_role.bump = ctx.bumps.user_role;
         
         // Each (user, role) PDA is unique — this accurately tracks the number of
-        // role assignments across the system (not unique users). Renamed from
-        // user_count to assignment_count to reflect correct semantics.
-        ctx.accounts.rbac_state.assignment_count += 1;
+        // role assignments across the system. Only increment if brand new PDA.
+        if is_new {
+            ctx.accounts.rbac_state.assignment_count += 1;
+        }
         
         emit!(RoleAssigned {
             user,
@@ -114,6 +117,10 @@ pub mod rbac_system {
         let role = &ctx.accounts.role;
         let current_time = Clock::get()?.unix_timestamp;
         
+        require!(
+            ctx.accounts.caller.key() == user_role.user,
+            RbacError::NotAuthorized
+        );
         require!(
             user_role.role == role.name,
             RbacError::UserRoleMismatch
@@ -158,6 +165,10 @@ pub mod rbac_system {
         let current_time = Clock::get()?.unix_timestamp;
         
         require!(
+            ctx.accounts.caller.key() == user_role.user,
+            RbacError::NotAuthorized
+        );
+        require!(
             user_role.role == role.name,
             RbacError::UserRoleMismatch
         );
@@ -183,6 +194,8 @@ pub mod rbac_system {
             RbacError::NotAuthorized
         );
 
+        ctx.accounts.rbac_state.assignment_count -= 1;
+
         emit!(RoleRevoked {
             user: ctx.accounts.user_role.user,
             revoked_by: ctx.accounts.authority.key(),
@@ -191,6 +204,21 @@ pub mod rbac_system {
         });
         
         // Anchor automatically returns the rent to `authority` because of `close = authority`
+        Ok(())
+    }
+
+    /// Transfer admin rights to a new wallet
+    pub fn transfer_admin(
+        ctx: Context<TransferAdmin>,
+        new_admin: Pubkey,
+    ) -> Result<()> {
+        require!(
+            ctx.accounts.rbac_state.admin == ctx.accounts.admin.key(),
+            RbacError::NotAuthorized
+        );
+        
+        ctx.accounts.rbac_state.admin = new_admin;
+        
         Ok(())
     }
 }
@@ -202,7 +230,7 @@ pub struct Initialize<'info> {
     #[account(
         init,
         payer = admin,
-        space = 8 + RbacState::SIZE,
+        space = 8 + RbacState::INIT_SPACE,
         seeds = [b"rbac_state"],
         bump
     )]
@@ -227,7 +255,7 @@ pub struct CreateRole<'info> {
     #[account(
         init,
         payer = admin,
-        space = 8 + Role::SIZE,
+        space = 8 + Role::INIT_SPACE,
         seeds = [b"role", role_name.as_bytes()],
         bump
     )]
@@ -256,9 +284,9 @@ pub struct AssignRole<'info> {
     pub role: Account<'info, Role>,
     
     #[account(
-        init,
+        init_if_needed,
         payer = authority,
-        space = 8 + UserRole::SIZE,
+        space = 8 + UserRole::INIT_SPACE,
         seeds = [b"user_role", user.as_ref(), role_name.as_bytes()],
         bump
     )]
@@ -283,6 +311,8 @@ pub struct CheckPermission<'info> {
         bump = user_role.bump,
     )]
     pub user_role: Account<'info, UserRole>,
+
+    pub caller: Signer<'info>,
 }
 
 #[derive(Accounts)]
@@ -307,48 +337,65 @@ pub struct RevokeRole<'info> {
     pub authority: Signer<'info>,
 }
 
+#[derive(Accounts)]
+pub struct TransferAdmin<'info> {
+    #[account(
+        mut,
+        seeds = [b"rbac_state"],
+        bump = rbac_state.bump,
+    )]
+    pub rbac_state: Account<'info, RbacState>,
+    
+    pub admin: Signer<'info>,
+}
+
 
 /// ============ STATE ACCOUNTS ============
 
 /// Global RBAC Configuration
 #[account]
+#[derive(InitSpace)]
 pub struct RbacState {
     pub admin: Pubkey,              // Master admin
     pub role_count: u32,            // Total distinct roles created
     pub assignment_count: u32,      // Total role assignments (each user+role PDA = 1)
     pub bump: u8,               
 }
-impl RbacState {
-    pub const SIZE: usize = 32 + 4 + 4 + 1; 
-}
+// impl RbacState {
+//     pub const SIZE: usize = 32 + 4 + 4 + 1; 
+// }
 
 /// On-chain Role Data
 #[account]
+#[derive(InitSpace)]
 pub struct Role {
+    #[max_len(32)]
     pub name: String,                // Limited to 32 chars
     pub permissions: u32,            // Bitmask. E.g: 0b0001 = read, 0b0010 = create
     pub created_at: i64,             
     pub bump: u8,                    
 }
-impl Role {
-    // 4 for Prefix + 32 String + 4 (u32) + 8 (i64) + 1 (u8)
-    pub const SIZE: usize = 4 + 32 + 4 + 8 + 1; 
-}
+// impl Role {
+//     // 4 for Prefix + 32 String + 4 (u32) + 8 (i64) + 1 (u8)
+//     pub const SIZE: usize = 4 + 32 + 4 + 8 + 1; 
+// }
 
 /// Maps User to Role 
 #[account]
+#[derive(InitSpace)]
 pub struct UserRole {
-    pub user: Pubkey,          
+    pub user: Pubkey,
+    #[max_len(32)]
     pub role: String,          
     pub assigned_at: i64,      
     pub expires_at: Option<i64>, // Time bound constraint. Nullable.
     pub assigned_by: Pubkey,   
     pub bump: u8,              
 }
-impl UserRole {
-    // 32 + (4+32 string) + 8 + 9 (Option<i64>) + 32 + 1 
-    pub const SIZE: usize = 32 + 36 + 8 + 9 + 32 + 1; 
-}
+// impl UserRole {
+//     // 8 (discriminator) + 32 + (4+32 string) + 8 + 9 (Option<i64>) + 32 + 1 
+//     pub const SIZE: usize = 8 + 32 + 36 + 8 + 9 + 32 + 1; 
+// }
 
 /// ============ ERROR CODES ============
 
