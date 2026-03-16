@@ -106,9 +106,22 @@ await program.methods.assignRole(userWallet, "editor", expiry).accounts({}).rpc(
 const hasPerm = await program.methods.checkPermission(permissions).accounts({}).view();
 ```
 
-## Testing with CLI (Testable Client)
+## Client Implementations (Testable Clients)
 
-To fulfill the testable client requirement, a simple CLI script `cli.ts` is provided to interact with the deployed program on Devnet.
+To fulfill the testable client requirement, we built **two** clients for this system: a production-grade UI and a developer CLI.
+
+### 1. Next.js Frontend (Deep Cyber UI)
+A premium, responsive dashboard built with Next.js, Tailwind CSS, and wallet-adapter. It provides a complete interface for admins to manage roles and for users to view permissions.
+- **Location:** `/frontend` directory
+- **Features:** Wallet connect, Role assignment/revocation, Admin transfer, Real-time state syncing.
+- **Run Locally:**
+  ```bash
+  cd frontend
+  npm install
+  npm run dev
+  ```
+
+### 2. Developer CLI
 
 ### Setup
 Make sure your dependencies are installed:

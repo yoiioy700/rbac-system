@@ -4,11 +4,11 @@
 
 ### Technical
 - [x] **On-chain program deployed to Devnet**
-  - Program ID: `Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS`
-  - [View on Explorer](https://explorer.solana.com/address/Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS?cluster=devnet)
+  - Program ID: `826VeESV6R1DQnt5dELnGHx7j3xewoCRYX3nN4gJ9p2T`
+  - [View on Explorer](https://explorer.solana.com/address/826VeESV6R1DQnt5dELnGHx7j3xewoCRYX3nN4gJ9p2T?cluster=devnet)
 
 - [x] **Public GitHub Repository**
-  - Repo: [github.com/yourusername/rbac-system](https://github.com/yourusername/rbac-system)
+  - Repo: [github.com/yoiioy700/rbac-system](https://github.com/yoiioy700/rbac-system)
   - README with setup instructions
   - Full source code
 
@@ -34,11 +34,14 @@
   - Trade-offs explained
 
 ### Client/UX
+- [x] **Premium Next.js Frontend (Deep Cyber Theme)**
+  - Full dashboard for Role Management
+  - Wallet Adapter Integration
+  - Real-time on-chain state queries
 - [x] **Minimal CLI client**
-  - `node cli.js init`
-  - `node cli.js create-role`
-  - `node cli.js check-perm`
-  - `node cli.js demo` (interactive demo)
+  - `npm run cli init`
+  - `npm run cli create-role`
+  - `npm run cli assign-role`
 
 ---
 
@@ -117,9 +120,8 @@
 
 ## 🔗 Links
 
-- **GitHub:** https://github.com/yourusername/rbac-system
-- **Demo Video:** [YouTube/Loom link]
-- **Devnet Explorer:** https://explorer.solana.com/address/Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS?cluster=devnet
+- **GitHub:** https://github.com/yoiioy700/rbac-system
+- **Devnet Explorer:** https://explorer.solana.com/address/826VeESV6R1DQnt5dELnGHx7j3xewoCRYX3nN4gJ9p2T?cluster=devnet
 
 ---
 
@@ -130,11 +132,11 @@
 **Experience:** 
 - 3+ years Web2 backend development
 - 1+ year Solana/Anchor development
-- Previous projects: [list]
 
 **Contact:**
 - Telegram: @yoiioy0
 - Twitter: @yoiioy0
+- Github: @yoiioy700
 
 ---
 
@@ -143,19 +145,10 @@
 1. **Clear Web2 → Solana mapping** (30% criteria)
 2. **Production-ready code** with tests (25%)
 3. **Complete documentation** (15%)
-4. **Working client** (10%)
+4. **Premium UX UI Client** (10%)
 5. **Complex enough** to demonstrate skills
 
 **Expected Score: 95-100%**
-
----
-
-## 🚀 Future Roadmap
-
-If this wins:
-- Mainnet deployment
-- React frontend
-- Integration guide
 
 ---
 
